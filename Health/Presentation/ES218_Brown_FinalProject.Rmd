@@ -183,4 +183,18 @@ ggplot(ne.counties2, aes(x = `Drug Poisoning Mortality Rate`, y = `MHP per 100,0
 
 There appears to be no relation between access to mental health providers and drug poisoning mortality rates between New England counties. However, using a loess curve with a span of 0.9, we can see there is a parabolic relation between the two variables. However, given the wide span of the loess curve and the resulting shape of the curve, this is a rather weak relationship.
 
+At this point, lets take a step back and see if there is any relationshuip between income and access to mental health care providers nationwide.
+
+``` {r income and mhp, fig.align = "center"}
+ggplot(all.data, aes(x = `Medianhouseholdincome`, y = `MHP per 100,000 people`)) + geom_point() + xlab("Median Household Income") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+There appearst to be slight positive correlation between the two variables.
+
+I had trouble plotting the residuals, but this is where they would go.
+
+## Conclusion
+
+After several analyses of New England mental health variables, it appears there is no correlation between mental health and drug poisoning mortality rate. However, analysis does show that there might be a correlation between income in a state and access to mental health care providers per 100,000 people.
 

@@ -129,9 +129,10 @@ mentally_unhealthy.map <- tm_shape(ne.shp, projection = 26919) +
 tmap_arrange(income.map, drug.map, MHP.map, mentally_unhealthy.map, 
              nrow = 2, ncol = 2)
 
-# ---- plot mental health per 100,000 by state ----
+# ---- plot mean mental health per 100,000 and median income -------------------------------------------
 
-ggplot(ne.counties2, aes(y = `MHP per 100,000 people`, x = Geo_NAME)) + geom_col() + facet_wrap(~ State)
+ggplot(all.data, aes(x = `Medianhouseholdincome`, y = `MHP per 100,000 people`)) + geom_point() + xlab("Median Household Income") +
+  theme(axis.text.x = element_text(angle = 90))
 
 # ---- qq-plot of all new england counties' drug mortality rate ----
 
@@ -148,11 +149,11 @@ ggplot(ne.counties2, aes(x = `Drug Poisoning Mortality Rate`, y = `MHP per 100,0
 ggplot(ne.counties2, aes(x = `Drug Poisoning Mortality Rate`, y = `Mentally Unhealthy Days per Month`)) +
   geom_point()
 
-# ---- Residuals ----
-res <- lm(`Drug Poisoning Mortality Rate` ~  `MHP per 100,000 people` + I(`Drug Poisoning Mortality Rate`^2), dat = ne.counties2)
+# ---- Residuals for mental health provider and income----
+res <- lm(`MHP per 100,000 people` ~ Medianhouseholdincome, dat = all.data)
 
-residuals(res)                      
+all.data$residuals <- residuals(res)                      
 
-ggplot(ne.counties2, aes(x = `Drug Poisoning Mortality Rate`, y = residuals(res))) + geom_point() +
+ggplot(all.data, aes(x = Medianhouseholdincome, y = residuals)) + geom_point() +
   stat_smooth(method = "loess", se = FALSE, span = 1, 
               method.args = list(degree = 1) )
