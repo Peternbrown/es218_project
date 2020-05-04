@@ -4,13 +4,14 @@ library(ggplot2)
 library(tibble)
 library(USAboundaries)
 library(tmap)
+library(tibble)
 
 # Set working directory
 # Load the data (found in the repository, Health/data/...)
-health.dat <- read.csv("R11371317_SL050.csv")
+health.dat <- read.csv(url("https://raw.githubusercontent.com/Peternbrown/es218_project/master/Health/data/R11371317_SL050.csv"))
 
 # Load county income data
-income.dat <- read.csv("County_GDP_percapita.csv")
+income.dat <- read.csv(url("https://raw.githubusercontent.com/Peternbrown/es218_project/master/Health/data/County_GDP_percapita.csv"))
 
 # ---- CLEAN AND PREPARE DATA ----
 
@@ -22,13 +23,16 @@ income.state <- income.dat %>%
 # Remove uneeded columns from health data
 health.dat2 <- health.dat %>% 
   select(Geo_STATE, SE_T001_001, SE_T001_002, SE_T004_001, SE_T004_002,
-          SE_T008_004, SE_T005_001) %>% 
+          SE_T008_004, SE_T005_001, SE_NV003_001, SE_NV003_002, SE_NV006_004) %>% 
   rename("Physically Unhealthy Days per Month"                      = SE_T001_001,
          "Mentally Unhealthy Days per Month"                        = SE_T001_002,
          "Primary Care Physicians (PCP)"                            = SE_T004_001,
          "Mental Health Providers (MHP)"                            = SE_T004_002,
          "Health Care Costs Price-adjusted Medicare Reimbursements" = SE_T005_001,
-         "Drug Poisoning Mortality"                                 = SE_T008_004) %>% 
+         "Drug Poisoning Mortality Count"                           = SE_T008_004,
+         "Drug Poisoning Mortality Rate"                            = SE_NV006_004,
+         "PCP per 100,000 people"                                   = SE_NV003_001,
+         "MHP per 100,000 people"                                   = SE_NV003_002) %>% 
   group_by(Geo_STATE) %>% 
   summarise_all(mean, na.rm = TRUE) %>% 
   mutate_all(funs(round(., digits = 2)))
@@ -39,12 +43,54 @@ all.data <- inner_join(health.dat2, income.state, by = "Geo_STATE") %>%
 
 # Create New-England only data
 ne.dat <- all.data %>% 
-  filter(State = = "Maine" | State == "New Hampshire" | State == "Vermont" |
+  filter(State == "Maine" | State == "New Hampshire" | State == "Vermont" |
          State == "Massachusetts" | State == "Connecticut" |State == "Rhode Island") %>% 
   rename("state_name" = State)
 
+# Create New England Counties
+attach(health.dat)
+ne.counties <- health.dat[order(Geo_FIPS), ]
+detach(health.dat)
+
+ne.counties2 <- ne.counties %>%
+  filter(Geo_FIPS == "9001"  | Geo_FIPS == "9003" | Geo_FIPS == "9005" | Geo_FIPS == "9007" | Geo_FIPS == "9009" |
+         Geo_FIPS == "9011"  | Geo_FIPS == "9013" | Geo_FIPS == "9015" | Geo_FIPS == "23001" | Geo_FIPS == "23003" |
+         Geo_FIPS == "23005" | Geo_FIPS == "23007" | Geo_FIPS == "23009" | Geo_FIPS == "23011" | Geo_FIPS == "23013" | 
+         Geo_FIPS == "23015" | Geo_FIPS == "23017" | Geo_FIPS == "23019" | Geo_FIPS == "23021" | Geo_FIPS == "23023" | 
+         Geo_FIPS == "23025" | Geo_FIPS == "23027" | Geo_FIPS == "23029" | Geo_FIPS == "23031" | Geo_FIPS == "25001" | 
+         Geo_FIPS == "25003" | Geo_FIPS == "25005" | Geo_FIPS == "25007" | Geo_FIPS == "25009" | Geo_FIPS == "25011" |
+         Geo_FIPS == "25013" | Geo_FIPS == "25015" | Geo_FIPS == "25017" | Geo_FIPS == "25019" | Geo_FIPS == "25021" |
+         Geo_FIPS == "25023" | Geo_FIPS == "25025" | Geo_FIPS == "25027" | Geo_FIPS == "33001" | Geo_FIPS == "33003" | 
+         Geo_FIPS == "33005" | Geo_FIPS == "33007" | Geo_FIPS == "33009" | Geo_FIPS == "33011" | Geo_FIPS == "33013" |
+         Geo_FIPS == "33015" | Geo_FIPS == "33017" | Geo_FIPS == "33019" | Geo_FIPS == "44001" | Geo_FIPS == "44003" | 
+         Geo_FIPS == "44005" | Geo_FIPS == "44007" | Geo_FIPS == "44009" | Geo_FIPS == "50001" | Geo_FIPS == "50003" | 
+         Geo_FIPS == "50005" | Geo_FIPS == "50007" | Geo_FIPS == "50009" | Geo_FIPS == "50011" | Geo_FIPS == "50013" | 
+         Geo_FIPS == "50015" | Geo_FIPS == "50017" | Geo_FIPS == "50019" | Geo_FIPS == "50021" | Geo_FIPS == "50023" | 
+         Geo_FIPS == "50025" | Geo_FIPS == "50027") %>% 
+  select(Geo_STATE, Geo_NAME, Geo_QNAME, SE_T001_001, SE_T001_002, SE_T004_001, SE_T004_002,
+         SE_T008_004, SE_T005_001, SE_NV003_001, SE_NV003_002, SE_NV006_004) %>% 
+  rename("Physically Unhealthy Days per Month"                      = SE_T001_001,
+         "Mentally Unhealthy Days per Month"                        = SE_T001_002,
+         "Primary Care Physicians (PCP)"                            = SE_T004_001,
+         "Mental Health Providers (MHP)"                            = SE_T004_002,
+         "Health Care Costs Price-adjusted Medicare Reimbursements" = SE_T005_001,
+         "Drug Poisoning Mortality Count"                           = SE_T008_004,
+         "Drug Poisoning Mortality Rate"                            = SE_NV006_004,
+         "PCP per 100,000 people"                                   = SE_NV003_001,
+         "MHP per 100,000 people"                                   = SE_NV003_002) %>% 
+  add_column(State = c("Connecticut", "Connecticut", "Connecticut", "Connecticut", "Connecticut", "Connecticut", "Connecticut",
+                       "Connecticut", "Maine", "Maine", "Maine", "Maine", "Maine", "Maine", "Maine", "Maine", "Maine", "Maine", 
+                       "Maine", "Maine", "Maine", "Maine", "Maine", "Maine", "Massachusetts", "Massachusetts", "Massachusetts", 
+                       "Massachusetts", "Massachusetts", "Massachusetts", "Massachusetts", "Massachusetts", "Massachusetts", 
+                       "Massachusetts",  "Massachusetts", "Massachusetts", "Massachusetts", "Massachusetts", "New Hampshire", 
+                       "New Hampshire", "New Hampshire", "New Hampshire", "New Hampshire", "New Hampshire", "New Hampshire", 
+                       "New Hampshire",  "New Hampshire",  "New Hampshire", "Rhode Island", "Rhode Island", "Rhode Island",
+                       "Rhode Island", "Rhode Island", "Vermont", "Vermont", "Vermont", "Vermont", "Vermont", "Vermont", "Vermont", 
+                       "Vermont", "Vermont", "Vermont", "Vermont", "Vermont", "Vermont", "Vermont"))
 
 # ---- BEGIN ANALYSIS ----
+
+# ---- Maps and Intro ----
 
 # Create New England states only and shapefile
 
@@ -64,12 +110,12 @@ income.map <- tm_shape(ne.shp, projection = 26919) +
 
 # Map drug mortality
 drug.map <- tm_shape(ne.shp, projection = 26919) + 
-  tm_polygons("Drug Poisoning Mortality", style = "quantile", n = 6, palette = "Reds") +
+  tm_polygons("Drug Poisoning Mortality Rate", style = "quantile", n = 6, palette = "Reds") +
   tm_legend(outside = TRUE)
 
 # Map mental health providers
 MHP.map <- tm_shape(ne.shp, projection = 26919) + 
-  tm_polygons("Mental Health Providers (MHP)",
+  tm_polygons("MHP per 100,000 people",
               style = "quantile", n = 6, palette = "Blues") +
   tm_legend(outside = TRUE)
 
@@ -82,3 +128,31 @@ mentally_unhealthy.map <- tm_shape(ne.shp, projection = 26919) +
 # side-by-side maps (change figure size when knitting)
 tmap_arrange(income.map, drug.map, MHP.map, mentally_unhealthy.map, 
              nrow = 2, ncol = 2)
+
+# ---- plot mental health per 100,000 by state ----
+
+ggplot(ne.counties2, aes(y = `MHP per 100,000 people`, x = Geo_NAME)) + geom_col() + facet_wrap(~ State)
+
+# ---- qq-plot of all new england counties' drug mortality rate ----
+
+ggplot() + aes(sample = ne.counties2$`Drug Poisoning Mortality Rate`) + geom_qq(distribution = qnorm) + 
+  geom_qq_line(line.p = c(0.25, 0.75), col = "red") + ylab("Drug Poisoning Mortality Rate") +
+  ggtitle("Theoretical Q-Q Plot of New England Counties' Drug Poisoning Mortality Rates")
+
+# plot against access to mental health care providers
+
+ggplot(ne.counties2, aes(x = `Drug Poisoning Mortality Rate`, y = `MHP per 100,000 people`)) +
+  geom_point() + stat_smooth(method = "loess", se = FALSE, span = 0.9)
+
+# plot mentally unhealthy days against drugs
+ggplot(ne.counties2, aes(x = `Drug Poisoning Mortality Rate`, y = `Mentally Unhealthy Days per Month`)) +
+  geom_point()
+
+# ---- Residuals ----
+res <- lm(`Drug Poisoning Mortality Rate` ~  `MHP per 100,000 people` + I(`Drug Poisoning Mortality Rate`^2), dat = ne.counties2)
+
+residuals(res)                      
+
+ggplot(ne.counties2, aes(x = `Drug Poisoning Mortality Rate`, y = residuals(res))) + geom_point() +
+  stat_smooth(method = "loess", se = FALSE, span = 1, 
+              method.args = list(degree = 1) )
