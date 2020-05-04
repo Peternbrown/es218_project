@@ -1,3 +1,17 @@
+---
+title: "ES218 Final Project (Health Data)"
+author: "Peter Brown"
+date: "5/4/2020"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+``` {r data preparation}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -7,10 +21,10 @@ library(tmap)
 
 # Set working directory
 # Load the data (found in the repository, Health/data/...)
-health.dat <- read.csv("R11371317_SL050.csv")
+health.dat <- read.csv(url("https://raw.githubusercontent.com/Peternbrown/es218_project/master/Health/data/R11371317_SL050.csv"))
 
 # Load county income data
-income.dat <- read.csv("County_GDP_percapita.csv")
+income.dat <- read.csv(url("https://raw.githubusercontent.com/Peternbrown/es218_project/master/Health/data/County_GDP_percapita.csv"))
 
 # ---- CLEAN AND PREPARE DATA ----
 
@@ -22,13 +36,16 @@ income.state <- income.dat %>%
 # Remove uneeded columns from health data
 health.dat2 <- health.dat %>% 
   select(Geo_STATE, SE_T001_001, SE_T001_002, SE_T004_001, SE_T004_002,
-          SE_T008_004, SE_T005_001) %>% 
+          SE_T008_004, SE_T005_001, SE_NV003_001, SE_NV003_002, SE_NV006_004) %>% 
   rename("Physically Unhealthy Days per Month"                      = SE_T001_001,
          "Mentally Unhealthy Days per Month"                        = SE_T001_002,
          "Primary Care Physicians (PCP)"                            = SE_T004_001,
          "Mental Health Providers (MHP)"                            = SE_T004_002,
          "Health Care Costs Price-adjusted Medicare Reimbursements" = SE_T005_001,
-         "Drug Poisoning Mortality"                                 = SE_T008_004) %>% 
+         "Drug Poisoning Mortality Count"                           = SE_T008_004,
+         "Drug Poisoning Mortality Rate"                            = SE_NV006_004,
+         "PCP per 100,000 people"                                   = SE_NV003_001,
+         "MHP per 100,000 people"                                   = SE_NV003_002) %>% 
   group_by(Geo_STATE) %>% 
   summarise_all(mean, na.rm = TRUE) %>% 
   mutate_all(funs(round(., digits = 2)))
@@ -39,15 +56,12 @@ all.data <- inner_join(health.dat2, income.state, by = "Geo_STATE") %>%
 
 # Create New-England only data
 ne.dat <- all.data %>% 
-  filter(State = = "Maine" | State == "New Hampshire" | State == "Vermont" |
+  filter(State == "Maine" | State == "New Hampshire" | State == "Vermont" |
          State == "Massachusetts" | State == "Connecticut" |State == "Rhode Island") %>% 
   rename("state_name" = State)
+```
 
-
-# ---- BEGIN ANALYSIS ----
-
-# Create New England states only and shapefile
-
+``` {r maps prep}
 ne.map <- us_states(states = c("Massachusetts", "Vermont", "Maine",
                                "New Hampshire", "Rhode Island",
                                "Connecticut"))
@@ -78,7 +92,15 @@ mentally_unhealthy.map <- tm_shape(ne.shp, projection = 26919) +
   tm_polygons("Mentally Unhealthy Days per Month",
               style = "quantile", n = 6, palette = "Purples") +
   tm_legend(outside = TRUE)
+```
 
+## Geographical Overview
+
+```{r plot maps, fig.align = "center", fig.height = 7, fig.width = 7}
 # side-by-side maps (change figure size when knitting)
 tmap_arrange(income.map, drug.map, MHP.map, mentally_unhealthy.map, 
              nrow = 2, ncol = 2)
+```
+The above maps represent a graphical overview of New England states' statistics of factors that may be intertwined. In the following analysis I take a look at the relation between median household income, drug poisoning mortalities, number of mental health providers and the number of mentally unhealhy days by a person per month.
+
+A first glance we can see some trends. First, despite Massachussets having relatively high income and the most mental health care providers (MHP) per 100,000 people, the state has high number of mentally unhealthy days aong citizens and high drug mortality rate. Maine on the other hand has the lowest median household income, a low amount of MHP per 100,000 people and low drug poisoning mortality rate. However, they have among the highest mentally unhelathy days per month. This prelimianry look at our data prompts a few questions that we can further explore. 
