@@ -2,13 +2,14 @@
 title: "ES218 Final Project (Health Data)"
 author: "Peter Brown"
 date: "5/4/2020"
-output: 
+output:
   html_document:
     code_folding: hide
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ``` {r data preparation}
